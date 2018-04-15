@@ -42,26 +42,40 @@ function newplayer()
 	local x, y = 30, 200
 	local width, height = love.graphics.getDimensions()
 	return {
-		update = function(dt)
+		jumptimeleft = 0,
+		speed = 10,
+		jumptime = 1.5,
+		jumpheight = 100,
+		update = function(self, dt)
+			if self.jumptimeleft > 0 then
+				self.jumptimeleft = self.jumptimeleft - dt
+				y = y + (self.jumpheight*dt) --cai proporcional ao tempo de pulo
+			end
 		end,
 		draw = function()
 			love.graphics.setColor(0,255,0)
 			love.graphics.rectangle("fill", x, y, 10, 30)
 			love.graphics.setColor(255,255,255)
 		end,
-		walk = function(dir)
-			x = x + (dir*speed)
+		walk = function(self, dir)
+			x = x + (dir*self.speed)
 			if x > width then
 				x = 0
 			end
 		end,
-		jump = function()
+		jump = function(self)
+			--Checa se está pulando para evitar múltiplos pulos
+			if self.jumptimeleft > 0 then
+				return
+			end
+			
+			y = y - self.jumpheight
+			self.jumptimeleft = self.jumptime --seta tempo restante para o pulo acabar
 		end
 	}
 end
 
 function love.load()
-	speed = 10
 	player = newplayer()
 	
 	math.randomseed(os.time())
@@ -75,18 +89,19 @@ end
 function love.keypressed(key)
 	init = true
 	if key == "right" then
-		player.walk(1)
+		player:walk(1)
 	end
 	if key == "left" then
-		player.walk(-1)
+		player:walk(-1)
 	end
 	if key == "space" then
-		player.jump()
+		player:jump()
 	end
 end
 
 function love.update(dt)
   if init then
+	player:update(dt)
     for i = 1,#lisPlataforms do
       if(lisPlataforms[i]:isActive()) then
         lisPlataforms[i]:update()      

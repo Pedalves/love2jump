@@ -41,15 +41,29 @@ end
 function newplayer()
 	local x, y = 30, 200
 	local width, height = love.graphics.getDimensions()
+	local speed = 10
+	local jumpinitialspeed = 20
+	local jumphorizontalspeed = 10
 	return {
-		jumptimeleft = 0,
-		speed = 10,
-		jumptime = 1.5,
-		jumpheight = 100,
+		jumpspeedy = 0, --define velocidade corrente do pulo
+		jumpdir = 0, --define direção horizontal do pulo
+		startjumpheight = 0, --guarda a altura de onde pulou
 		update = function(self, dt)
-			if self.jumptimeleft > 0 then
-				self.jumptimeleft = self.jumptimeleft - dt
-				y = y + (self.jumpheight*dt) --cai proporcional ao tempo de pulo
+			if (self.jumpspeedy > 0 or y <= self.startjumpheight) then
+				self.jumpspeedy = self.jumpspeedy - gravity*dt
+				
+				y = y - self.jumpspeedy*dt
+					
+				--Checa se já está no solo
+				if y >= self.startjumpheight then
+					y = self.startjumpheight
+					self.jumpspeedy = 0
+				else				
+					x = x + (jumphorizontalspeed*dt*self.jumpdir) -- movimentacao enquanto pula
+				end
+				
+			else
+				jumpdir = 0 --reseta jumpdir
 			end
 		end,
 		draw = function()
@@ -58,24 +72,35 @@ function newplayer()
 			love.graphics.setColor(255,255,255)
 		end,
 		walk = function(self, dir)
-			x = x + (dir*self.speed)
+			--Checa se está pulando para não andar enquanto pula
+			if self.jumpspeedy > 0 then
+				self.jumpdir = dir
+				return
+			end
+			x = x + (dir*speed)
 			if x > width then
 				x = 0
 			end
 		end,
 		jump = function(self)
 			--Checa se está pulando para evitar múltiplos pulos
-			if self.jumptimeleft > 0 then
+			if self.jumpspeedy > 0 then
 				return
 			end
 			
-			y = y - self.jumpheight
-			self.jumptimeleft = self.jumptime --seta tempo restante para o pulo acabar
+			self.jumpspeedy = jumpinitialspeed --inicia pulo		
+			self.startjumpheight = y --Atualiza altura quando pulou
+		end,
+		getPosition = function()
+			return x, y
 		end
 	}
 end
 
 function love.load()
+	debugMode = true --printa variaveis
+
+	gravity = 10
 	player = newplayer()
 	
 	math.randomseed(os.time())
@@ -114,6 +139,12 @@ function love.draw()
 	player.draw()
 	for i = 1,#lisPlataforms do
 		lisPlataforms[i].draw()
+	end
+	
+	if debugMode then
+		playerx, playery = player.getPosition()
+		love.graphics.printf("jumpverticalspeed: " .. player.jumpspeedy, 0, 0, 500, "left")
+		love.graphics.printf("position: (" .. playerx .. ", " .. playery .. ")", 0, 30, 500, "left")
 	end
 end
 

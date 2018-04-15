@@ -121,13 +121,13 @@ end
 
 function love.keypressed(key)
 	init = true
-	if key == "right" then
+	if key == "right" or key == "d" then
 		player:walk(1)
 	end
-	if key == "left" then
+	if key == "left" or key == "a" then
 		player:walk(-1)
 	end
-	if key == "space" then
+	if key == "space" or key == "up" or key == "w" then
 		player:jump()
 	end
 end

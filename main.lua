@@ -1,5 +1,5 @@
 function love.load()
-	speed = 1
+	speed = 10
 	player = newplayer()
 end
 

@@ -70,6 +70,7 @@ function newplayer()
 				
 			else
 				jumpdir = 0 --reseta jumpdir
+				self:walk(self.walkdir) --movimento
 			end
 		end,
 		draw = function()
@@ -77,12 +78,23 @@ function newplayer()
 			love.graphics.rectangle("fill", x, y, 10, 30)
 			love.graphics.setColor(255,255,255)
 		end,
-		walk = function(self, dir)
+		walk = function(self)
 			--Checa se está pulando para não andar enquanto pula
 			if self.jumpspeedy > 0 then
 				self.jumpdir = dir
 				return
 			end
+			
+			dir = 0 --guarda direção do movimento
+			
+			--Checa tecla pressionada
+			if love.keyboard.isDown("right", "d") then
+				dir = 1
+			elseif love.keyboard.isDown("left", "a") then
+				dir = -1
+			end
+			
+			--Executa movimento
 			x = x + (dir*speed)
 			if x > width then
 				x = 0
@@ -121,12 +133,6 @@ end
 
 function love.keypressed(key)
 	init = true
-	if key == "right" or key == "d" then
-		player:walk(1)
-	end
-	if key == "left" or key == "a" then
-		player:walk(-1)
-	end
 	if key == "space" or key == "up" or key == "w" then
 		player:jump()
 	end

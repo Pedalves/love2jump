@@ -7,7 +7,9 @@ function newPlataform(init_y)
   local y = init_y
   local speed = math.random(1,10)
   local x = math.random(1,love.graphics.getWidth() - 100)
-
+  
+  local img = love.graphics.newImage("resources/plataform.png")
+  print()
   return {
     update = coroutine.wrap (function (self)
       while 1 do
@@ -24,7 +26,11 @@ function newPlataform(init_y)
     end),
     
     draw = function ()
+      love.graphics.setColor(0,0,0)
       love.graphics.rectangle("fill", x, y, 100, 10)
+      love.graphics.setColor(255,255,255)
+      
+      --love.graphics.draw(img, x, y, 0, 1/10, 1/10)
     end,
     
     sleep = 0,
@@ -102,6 +108,8 @@ function love.load()
 
 	gravity = 10
 	player = newplayer()
+  
+  background = love.graphics.newImage("resources/background.jpg")
 	
 	math.randomseed(os.time())
 	lisPlataforms = {}
@@ -136,6 +144,10 @@ function love.update(dt)
 end
 
 function love.draw()
+  local sx = love.graphics.getWidth() / background:getWidth()
+  local sy = love.graphics.getHeight() / background:getHeight()
+  love.graphics.draw(background, 0, 0, 0, sx, sy)
+
 	player.draw()
 	for i = 1,#lisPlataforms do
 		lisPlataforms[i].draw()

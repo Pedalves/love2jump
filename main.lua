@@ -45,46 +45,39 @@ function newPlataform(init_y)
 end
 
 function newplayer()
-	local x, y = 30, 200
+	local x, y = 30, 500
 	local width, height = love.graphics.getDimensions()
-	local speed = 10
-	local jumpinitialspeed = 20
-	local jumphorizontalspeed = 10
+	local speed = 200
+	local jumpinitialspeed = 300
 	return {
 		jumpspeedy = 0, --define velocidade corrente do pulo
 		jumpdir = 0, --define direção horizontal do pulo
 		startjumpheight = 0, --guarda a altura de onde pulou
+		sizex = 10, --largura do player
+		sizey = 30, --altura do player
 		update = function(self, dt)
-			if (self.jumpspeedy > 0 or y <= self.startjumpheight) then
+			-- pulo
+			if (self.jumpspeedy ~= 0) then
 				self.jumpspeedy = self.jumpspeedy - gravity*dt
 				
 				y = y - self.jumpspeedy*dt
 					
 				--Checa se já está no solo
-				if y >= self.startjumpheight then
-					y = self.startjumpheight
+				if y > self.startjumpheight then
 					self.jumpspeedy = 0
-				else				
-					x = x + (jumphorizontalspeed*dt*self.jumpdir) -- movimentacao enquanto pula
+					y = self.startjumpheight
 				end
-				
-			else
-				jumpdir = 0 --reseta jumpdir
-				self:walk(self.walkdir) --movimento
-			end
-		end,
-		draw = function()
-			love.graphics.setColor(0,255,0)
-			love.graphics.rectangle("fill", x, y, 10, 30)
-			love.graphics.setColor(255,255,255)
-		end,
-		walk = function(self)
-			--Checa se está pulando para não andar enquanto pula
-			if self.jumpspeedy > 0 then
-				self.jumpdir = dir
-				return
 			end
 			
+			self:walk(dt) --movimento
+			self:checkPos()
+		end,
+		draw = function(self)
+			love.graphics.setColor(0,255,0)
+			love.graphics.rectangle("fill", x, y, self.sizex, self.sizey)
+			love.graphics.setColor(255,255,255)
+		end,
+		walk = function(self, dt)
 			dir = 0 --guarda direção do movimento
 			
 			--Checa tecla pressionada
@@ -95,30 +88,41 @@ function newplayer()
 			end
 			
 			--Executa movimento
-			x = x + (dir*speed)
-			if x > width then
-				x = 0
-			end
+			x = x + (dir*speed*dt)
 		end,
 		jump = function(self)
 			--Checa se está pulando para evitar múltiplos pulos
-			if self.jumpspeedy > 0 then
-				return
+			if player.jumpspeedy == 0 then
+				self.jumpspeedy = jumpinitialspeed --inicia pulo				
+				self.startjumpheight = y --Atualiza altura quando pulou
 			end
-			
-			self.jumpspeedy = jumpinitialspeed --inicia pulo		
-			self.startjumpheight = y --Atualiza altura quando pulou
+		end,
+		isPlayerOnFloor = function()
 		end,
 		getPosition = function()
 			return x, y
+		end,
+		checkPos = function(self)
+			curX, curY = self.getPosition()
+			if curX > width - self.sizex then
+				x = width - self.sizex
+			elseif curX < 0 then
+				x = 0
+			end
+			if curY >= height - self.sizey then
+				y = height - self.sizey
+			elseif curY < 0 then
+				y = 0
+			end
 		end
 	}
 end
 
+
 function love.load()
 	debugMode = true --printa variaveis
 
-	gravity = 10
+	gravity = 500
 	player = newplayer()
   
   background = love.graphics.newImage("resources/background.jpg")
@@ -154,7 +158,7 @@ function love.draw()
   local sy = love.graphics.getHeight() / background:getHeight()
   love.graphics.draw(background, 0, 0, 0, sx, sy)
 
-	player.draw()
+	player:draw()
 	for i = 1,#lisPlataforms do
 		lisPlataforms[i].draw()
 	end

@@ -5,7 +5,7 @@ local init = false
 
 function newPlataform(init_y)
   local y = init_y
-  local speed = math.random(1,4)
+  local speed = math.random(1,3)
   local x = math.random(1,love.graphics.getWidth() - 100)
   
   local img = love.graphics.newImage("resources/plataform.png")
@@ -19,7 +19,7 @@ function newPlataform(init_y)
         if y > height then
           y = 0
           x = math.random(1,love.graphics.getWidth() - 100)
-          speed = math.random(1,4)
+          speed = math.random(1,3)
         end
         wait(1/1000, self)
        
@@ -27,11 +27,7 @@ function newPlataform(init_y)
     end),
     
     draw = function(self)
-      love.graphics.setColor(0,0,0)
-      love.graphics.rectangle("fill", x, y, self.width, self.height)
-      love.graphics.setColor(255,255,255)
-      
-      -- love.graphics.draw(img, x, y, 0, 1/10, 1/10)
+      love.graphics.draw(img, x , y - 2*self.height, 0, 1/15, 1/10)
     end,
     
     sleep = 0,

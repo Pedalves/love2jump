@@ -5,11 +5,10 @@ local init = false
 
 function newPlataform(init_y)
   local y = init_y
-  local speed = math.random(1,10)
+  local speed = math.random(1,4)
   local x = math.random(1,love.graphics.getWidth() - 100)
   
   local img = love.graphics.newImage("resources/plataform.png")
-  print()
   return {
 	width = 100,
 	height = 10,
@@ -20,7 +19,7 @@ function newPlataform(init_y)
         if y > height then
           y = 0
           x = math.random(1,love.graphics.getWidth() - 100)
-          speed = math.random(1,10)
+          speed = math.random(1,4)
         end
         wait(1/1000, self)
        
@@ -32,7 +31,7 @@ function newPlataform(init_y)
       love.graphics.rectangle("fill", x, y, self.width, self.height)
       love.graphics.setColor(255,255,255)
       
-      --love.graphics.draw(img, x, y, 0, 1/10, 1/10)
+      -- love.graphics.draw(img, x, y, 0, 1/10, 1/10)
     end,
     
     sleep = 0,
@@ -53,34 +52,38 @@ function newplayer()
 	local x, y = 50, 100
 	local width, height = love.graphics.getDimensions()
 	local speed = 200
-	local jumpinitialspeed = 300
+	local jumpinitialspeed = 350
+  
 	return {
 		jumpspeedy = 0, --define velocidade corrente do pulo
 		jumpdir = 0, --define direção horizontal do pulo
 		startjumpheight = 0, --guarda a altura de onde pulou
 		sizex = 10, --largura do player
 		sizey = 30, --altura do player
+    
 		--Controla o que ocorre com o player a cada Update
 		update = function(self, dt)
+      y = y - self.jumpspeedy*dt
+      
 			--Checa se já está no solo
-			curPlat = self:isPlayerOnFloor() --guarda a plataforma onde o player está
-			if curPlat ~= nil then
-				plat_x, plat_y = curPlat.getPosition()
-				self.jumpspeedy = 0
-				y = plat_y - curPlat.height - self.sizey
-			else
-				self.jumpspeedy = self.jumpspeedy - gravity*dt	
-				y = y - self.jumpspeedy*dt
-			end
-			
+      curPlat = self:isPlayerOnFloor() --guarda a plataforma onde o player está
+      if curPlat ~= nil then
+        plat_x, plat_y = curPlat.getPosition()
+        self.jumpspeedy = 0
+      else
+         self.jumpspeedy = self.jumpspeedy - gravity*dt
+      end
+      
 			self:walk(dt) --movimento
 			self:checkPos()
 		end,
+    
 		draw = function(self)
 			love.graphics.setColor(0,255,0)
 			love.graphics.rectangle("fill", x, y, self.sizex, self.sizey)
 			love.graphics.setColor(255,255,255)
 		end,
+    
 		--Define movimentação
 		walk = function(self, dt)
 			dir = 0 --guarda direção do movimento
@@ -91,18 +94,20 @@ function newplayer()
 			elseif love.keyboard.isDown("left", "a") then
 				dir = -1
 			end
-			
 			--Executa movimento
 			x = x + (dir*speed*dt)
 		end,
+    
+    
 		--Define o pulo
 		jump = function(self)
+      if self.jumpspeedy <= 0 and self.jumpspeedy > -50 then
 			--Checa se está pulando para evitar múltiplos pulos
-			if player.jumpspeedy == 0 then
-				self.jumpspeedy = jumpinitialspeed --inicia pulo				
-				self.startjumpheight = y --Atualiza altura quando pulou
-			end
+        self.jumpspeedy = jumpinitialspeed --inicia pulo				
+        self.startjumpheight = y --Atualiza altura quando pulou
+      end
 		end,
+    
 		--Checa se jogador está em uma plataforma ou no chão (no caso, retorna nil)
 		isPlayerOnFloor = function(self)
 			--Para cada plataforma, checa se player está em cima
@@ -111,17 +116,20 @@ function newplayer()
 				--checa x
 				if (x >= plat_x and x <= plat_x + lisPlataforms[i].width) then
 					--checa y
-					if (y >= plat_y and y <= plat_y + lisPlataforms[i].height + self.sizey) then
+					if (math.floor(y) == math.floor(plat_y - self.sizey)) then
+            
 						return lisPlataforms[i]
 					end
 				end
 			end
 			return nil
 		end,
+    
 		--Retorna as coordenadas do player
 		getPosition = function()
 			return x, y
 		end,
+    
 		--Checa se player está em uma posição válida e corrige caso necessário
 		checkPos = function(self)
 			curX, curY = self.getPosition()
@@ -152,7 +160,7 @@ function love.load()
 	math.randomseed(os.time())
 	lisPlataforms = {}
   
-	for i = 1, 5 do
+	for i = 1, 10 do
 		lisPlataforms[i] = newPlataform(i * 100)
 	end
 end

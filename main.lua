@@ -11,6 +11,8 @@ function newPlataform(init_y)
   local img = love.graphics.newImage("resources/plataform.png")
   print()
   return {
+	width = 100,
+	height = 10,
     update = coroutine.wrap (function (self)
       while 1 do
         local _, height = love.graphics.getDimensions( )
@@ -25,9 +27,9 @@ function newPlataform(init_y)
       end
     end),
     
-    draw = function ()
+    draw = function(self)
       love.graphics.setColor(0,0,0)
-      love.graphics.rectangle("fill", x, y, 100, 10)
+      love.graphics.rectangle("fill", x, y, self.width, self.height)
       love.graphics.setColor(255,255,255)
       
       --love.graphics.draw(img, x, y, 0, 1/10, 1/10)
@@ -40,12 +42,15 @@ function newPlataform(init_y)
         return true
       end
       return false
-    end
+    end,
+	getPosition = function()
+		return x,y
+	end
   }
 end
 
 function newplayer()
-	local x, y = 30, 500
+	local x, y = 50, 100
 	local width, height = love.graphics.getDimensions()
 	local speed = 200
 	local jumpinitialspeed = 300
@@ -55,18 +60,17 @@ function newplayer()
 		startjumpheight = 0, --guarda a altura de onde pulou
 		sizex = 10, --largura do player
 		sizey = 30, --altura do player
+		--Controla o que ocorre com o player a cada Update
 		update = function(self, dt)
-			-- pulo
-			if (self.jumpspeedy ~= 0) then
-				self.jumpspeedy = self.jumpspeedy - gravity*dt
-				
+			--Checa se já está no solo
+			curPlat = self:isPlayerOnFloor() --guarda a plataforma onde o player está
+			if curPlat ~= nil then
+				plat_x, plat_y = curPlat.getPosition()
+				self.jumpspeedy = 0
+				y = plat_y - curPlat.height - self.sizey
+			else
+				self.jumpspeedy = self.jumpspeedy - gravity*dt	
 				y = y - self.jumpspeedy*dt
-					
-				--Checa se já está no solo
-				if y > self.startjumpheight then
-					self.jumpspeedy = 0
-					y = self.startjumpheight
-				end
 			end
 			
 			self:walk(dt) --movimento
@@ -77,6 +81,7 @@ function newplayer()
 			love.graphics.rectangle("fill", x, y, self.sizex, self.sizey)
 			love.graphics.setColor(255,255,255)
 		end,
+		--Define movimentação
 		walk = function(self, dt)
 			dir = 0 --guarda direção do movimento
 			
@@ -90,6 +95,7 @@ function newplayer()
 			--Executa movimento
 			x = x + (dir*speed*dt)
 		end,
+		--Define o pulo
 		jump = function(self)
 			--Checa se está pulando para evitar múltiplos pulos
 			if player.jumpspeedy == 0 then
@@ -97,11 +103,26 @@ function newplayer()
 				self.startjumpheight = y --Atualiza altura quando pulou
 			end
 		end,
-		isPlayerOnFloor = function()
+		--Checa se jogador está em uma plataforma ou no chão (no caso, retorna nil)
+		isPlayerOnFloor = function(self)
+			--Para cada plataforma, checa se player está em cima
+			for i = 1,#lisPlataforms do
+				plat_x, plat_y = lisPlataforms[i].getPosition()
+				--checa x
+				if (x >= plat_x and x <= plat_x + lisPlataforms[i].width) then
+					--checa y
+					if (y >= plat_y and y <= plat_y + lisPlataforms[i].height + self.sizey) then
+						return lisPlataforms[i]
+					end
+				end
+			end
+			return nil
 		end,
+		--Retorna as coordenadas do player
 		getPosition = function()
 			return x, y
 		end,
+		--Checa se player está em uma posição válida e corrige caso necessário
 		checkPos = function(self)
 			curX, curY = self.getPosition()
 			if curX > width - self.sizex then
@@ -160,7 +181,7 @@ function love.draw()
 
 	player:draw()
 	for i = 1,#lisPlataforms do
-		lisPlataforms[i].draw()
+		lisPlataforms[i]:draw()
 	end
 	
 	if debugMode then

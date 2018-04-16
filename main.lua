@@ -131,7 +131,7 @@ function newplayer()
 				x = 0
 			end
 			if curY >= height - self.sizey then
-				y = height - self.sizey
+				gameover = true
 			elseif curY < 0 then
 				y = 0
 			end
@@ -143,6 +143,7 @@ end
 function love.load()
 	debugMode = true --printa variaveis
 
+	gameover = false
 	gravity = 500
 	player = newplayer()
   
@@ -164,7 +165,7 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
-  if init then
+  if (init and not gameover) then
 	player:update(dt)
     for i = 1,#lisPlataforms do
       if(lisPlataforms[i]:isActive()) then
@@ -175,19 +176,23 @@ function love.update(dt)
 end
 
 function love.draw()
-  local sx = love.graphics.getWidth() / background:getWidth()
-  local sy = love.graphics.getHeight() / background:getHeight()
-  love.graphics.draw(background, 0, 0, 0, sx, sy)
+	local sx = love.graphics.getWidth() / background:getWidth()
+	local sy = love.graphics.getHeight() / background:getHeight()
+	if not gameover then
+		love.graphics.draw(background, 0, 0, 0, sx, sy)
 
-	player:draw()
-	for i = 1,#lisPlataforms do
-		lisPlataforms[i]:draw()
-	end
-	
-	if debugMode then
-		playerx, playery = player.getPosition()
-		love.graphics.printf("jumpverticalspeed: " .. player.jumpspeedy, 0, 0, 500, "left")
-		love.graphics.printf("position: (" .. playerx .. ", " .. playery .. ")", 0, 30, 500, "left")
+		player:draw()
+		for i = 1,#lisPlataforms do
+			lisPlataforms[i]:draw()
+		end
+		
+		if debugMode then
+			playerx, playery = player.getPosition()
+			love.graphics.printf("jumpverticalspeed: " .. player.jumpspeedy, 0, 0, 500, "left")
+			love.graphics.printf("position: (" .. playerx .. ", " .. playery .. ")", 0, 30, 500, "left")
+		end
+	else
+		love.graphics.print("GAME OVER", love.graphics.getWidth()/4, love.graphics.getHeight()/4, 0, 5, 5)
 	end
 end
 

@@ -31,7 +31,8 @@ function newPlataform(init_y)
     end),
     
     draw = function(self)
-      if love.getVersion.minor == 9 then
+      major, minor, revision, codename = love.getVersion()
+      if minor == 9 then
         love.graphics.setColor(0,0,0)
         love.graphics.rectangle("fill", x, y, self.width, self.height)
         love.graphics.setColor(255,255,255)

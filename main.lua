@@ -31,7 +31,13 @@ function newPlataform(init_y)
     end),
     
     draw = function(self)
-      love.graphics.draw(img, x , y - 2*self.height, 0, 1/15, 1/10)
+      if love.getVersion.minor == 9 then
+        love.graphics.setColor(0,0,0)
+        love.graphics.rectangle("fill", x, y, self.width, self.height)
+        love.graphics.setColor(255,255,255)
+      else
+        love.graphics.draw(img, x , y - 2*self.height, 0, 1/15, 1/10)
+      end
     end,
     
     sleep = 0,
@@ -189,14 +195,11 @@ function love.keypressed(key)
   player2:keypressed(key)
   
   if gameover ~= nil then
-    if key == 'space' then
+    if key == 'space' or key == ' ' then
         love.load()
     end
   end
   
-  if key == "p" then
-    love.graphics.captureScreenshot("teste.png")
-  end
 end
 
 -----------------------------------------------------------------------

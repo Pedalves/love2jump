@@ -2,6 +2,10 @@
 -- Pedro Ferreira - 1320981
 
 local init = false
+local move_player1 = {left = "a", jump = "w", right = "d"}
+local move_player2 = {left = "left", jump = "up", right = "right"}
+
+-----------------------------------------------------------------------
 
 function newPlataform(init_y)
   local y = init_y
@@ -39,16 +43,18 @@ function newPlataform(init_y)
       return false
     end,
 	getPosition = function()
-		return x,y
+		return x, y
 	end
   }
 end
 
-function newplayer()
-	local x, y = 50, 100
+-----------------------------------------------------------------------
+
+function newplayer(movetable, color, xInit, yInit)
+	local x, y = xInit + 20, yInit - 30
 	local width, height = love.graphics.getDimensions()
 	local speed = 200
-	local jumpinitialspeed = 350
+	local jumpinitialspeed = 380
   
 	return {
 		jumpspeedy = 0, --define velocidade corrente do pulo
@@ -75,19 +81,29 @@ function newplayer()
 		end,
     
 		draw = function(self)
-			love.graphics.setColor(0,255,0)
+      if color == "green" then
+        love.graphics.setColor(0,255,0)
+      else
+        love.graphics.setColor(255,0,0)
+      end
 			love.graphics.rectangle("fill", x, y, self.sizex, self.sizey)
 			love.graphics.setColor(255,255,255)
 		end,
+    
+    keypressed = function(self, key)
+      if key == movetable.jump then
+        self:jump()
+      end
+    end,
     
 		--Define movimentação
 		walk = function(self, dt)
 			dir = 0 --guarda direção do movimento
 			
 			--Checa tecla pressionada
-			if love.keyboard.isDown("right", "d") then
+			if love.keyboard.isDown(movetable.right) then
 				dir = 1
-			elseif love.keyboard.isDown("left", "a") then
+			elseif love.keyboard.isDown(movetable.left) then
 				dir = -1
 			end
 			--Executa movimento
@@ -97,7 +113,7 @@ function newplayer()
     
 		--Define o pulo
 		jump = function(self)
-      if self.jumpspeedy <= 0 and self.jumpspeedy > -50 then
+      if self.jumpspeedy <= 0 and self.jumpspeedy > -52 then
 			--Checa se está pulando para evitar múltiplos pulos
         self.jumpspeedy = jumpinitialspeed --inicia pulo				
         self.startjumpheight = y --Atualiza altura quando pulou
@@ -130,26 +146,25 @@ function newplayer()
 		checkPos = function(self)
 			curX, curY = self.getPosition()
 			if curX > width - self.sizex then
-				x = width - self.sizex
-			elseif curX < 0 then
 				x = 0
+			elseif curX < 0 then
+				x = width - self.sizex
 			end
 			if curY >= height - self.sizey then
-				gameover = true
-			elseif curY < 0 then
-				y = 0
+				gameover = color
 			end
 		end
 	}
 end
 
+-----------------------------------------------------------------------
 
 function love.load()
-	debugMode = true --printa variaveis
-
-	gameover = false
+  love.window.setTitle("Love2Jump")
+  
+	gameover = nil
 	gravity = 500
-	player = newplayer()
+  gameovertextfont = love.graphics.newFont("resources/PressStart2P-Regular.ttf")
   
   background = love.graphics.newImage("resources/background.jpg")
 	
@@ -159,18 +174,37 @@ function love.load()
 	for i = 1, 10 do
 		lisPlataforms[i] = newPlataform(i * 100)
 	end
+  
+  initialX, initialY = lisPlataforms[2].getPosition()
+  
+  player1 = newplayer(move_player1, "green", initialX, initialY)
+  player2 = newplayer(move_player2, "red", initialX + 20, initialY)
 end
+
+-----------------------------------------------------------------------
 
 function love.keypressed(key)
 	init = true
-	if key == "space" or key == "up" or key == "w" then
-		player:jump()
-	end
+  player1:keypressed(key)
+  player2:keypressed(key)
+  
+  if gameover ~= nil then
+    if key == 'space' then
+        love.load()
+    end
+  end
+  
+  if key == "p" then
+    love.graphics.captureScreenshot("teste.png")
+  end
 end
 
+-----------------------------------------------------------------------
+
 function love.update(dt)
-  if (init and not gameover) then
-	player:update(dt)
+  if (init and gameover == nil) then
+	player1:update(dt)
+  player2:update(dt)
     for i = 1,#lisPlataforms do
       if(lisPlataforms[i]:isActive()) then
         lisPlataforms[i]:update()      
@@ -179,26 +213,38 @@ function love.update(dt)
   end
 end
 
+-----------------------------------------------------------------------
+
 function love.draw()
 	local sx = love.graphics.getWidth() / background:getWidth()
 	local sy = love.graphics.getHeight() / background:getHeight()
-	if not gameover then
+	if gameover == nil then
 		love.graphics.draw(background, 0, 0, 0, sx, sy)
 
-		player:draw()
+		player1:draw()
+    player2:draw()
 		for i = 1,#lisPlataforms do
 			lisPlataforms[i]:draw()
 		end
-		
-		if debugMode then
-			playerx, playery = player.getPosition()
-			love.graphics.printf("jumpverticalspeed: " .. player.jumpspeedy, 0, 0, 500, "left")
-			love.graphics.printf("position: (" .. playerx .. ", " .. playery .. ")", 0, 30, 500, "left")
-		end
 	else
-		love.graphics.print("GAME OVER", love.graphics.getWidth()/4, love.graphics.getHeight()/4, 0, 5, 5)
+    love.graphics.setFont(gameovertextfont)
+    love.graphics.draw(background, 0, 0, 0, sx, sy)
+    love.graphics.setColor(255,255,255)
+    --love.graphics.setColor(0,0,0)
+		love.graphics.print("GAME OVER", love.graphics.getWidth()/6, love.graphics.getHeight()/4, 0, 5, 5)
+		love.graphics.print("Player " .. gameover .. " lost", love.graphics.getWidth()/7, love.graphics.getHeight()/2.5, 0, 3, 3)
+    love.graphics.print("Press SPACE to start a new game", love.graphics.getWidth()/4, love.graphics.getHeight()/1.2, 0, 1, 1)
+    love.graphics.setColor(255,255,255)
+    
+    if gameover ~= "red" then
+      love.graphics.setColor(255,0,0)
+    else 
+      love.graphics.setColor(0,255,0)
+    end
 	end
 end
+
+-----------------------------------------------------------------------
 
 function wait(segundos, meublip)
     cur = os.clock()

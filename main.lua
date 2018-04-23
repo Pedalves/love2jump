@@ -19,7 +19,7 @@ function newPlataform(init_y)
     update = coroutine.wrap (function (self)
       while 1 do
         local _, height = love.graphics.getDimensions( )
-        y = y+speed/10
+        y = y+speed/20
         if y > height then
           y = 0
           x = math.random(1,love.graphics.getWidth() - 100)
@@ -120,7 +120,7 @@ function newplayer(movetable, color, xInit, yInit)
     
 		--Define o pulo
 		jump = function(self)
-      if self.jumpspeedy <= 0 and self.jumpspeedy > -52 then
+      if self.jumpspeedy <= 0 and self.jumpspeedy > -40 then
 			--Checa se está pulando para evitar múltiplos pulos
         self.jumpspeedy = jumpinitialspeed --inicia pulo				
         self.startjumpheight = y --Atualiza altura quando pulou
